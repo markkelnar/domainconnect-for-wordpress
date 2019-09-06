@@ -20,8 +20,8 @@ services:
        - "8000:80"
      restart: always
      volumes:
-       - ./domainconnect-shortcode:/var/www/html/wp-content/plugins/domainconnect-shortcode
        - ./wp:/var/www/html
+       - ./domainconnect-shortcode:/var/www/html/wp-content/plugins/domainconnect-shortcode
      environment:
        WORDPRESS_DB_HOST: db:3306
        WORDPRESS_DB_USER: wordpress
