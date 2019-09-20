@@ -9,7 +9,7 @@ class ProviderFunctions {
 
 	public function __construct( $provider_api_url ) {
 		$this->api_url   = $provider_api_url;
-		$this->cache_key = 'dnsprovider_' . $provider_api_url;
+		$this->cache_key = $provider_api_url;
 	}
 
 	public function from_cache() {

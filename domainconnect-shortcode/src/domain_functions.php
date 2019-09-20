@@ -12,7 +12,7 @@ class DomainFunctions {
 		$this->provider_url      = '';
 		$this->provider_settings = '';
 		// Cache per domain
-		$this->cache_key         = 'domain_' . $this->domain;
+		$this->cache_key         = $this->domain;
 	}
 
 	public function from_cache() {
