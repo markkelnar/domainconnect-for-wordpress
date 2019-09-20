@@ -67,8 +67,10 @@ function domainconnect_shortcode( $atts = [], $content = null, $tag = '' ) {
 	$o .= '<div class="domainconnect-box">';
 
 	if ( $is_supported ) {
-		$o .= '<p>' . esc_html__( $domainconnect_atts['supported'], 'domainconnect' ) . '</p>';
-		$o .= "<p> $domain : " . $dc->provider_display_name() . '</p>';
+		// TODO: what to do with this supported message?
+		// How would it be possible to display the detected provider name
+		//$o .= '<p>' . esc_html__( $domainconnect_atts['supported'], 'domainconnect' ) . '</p>';
+		//$o .= "<p> $domain : " . $dc->provider_display_name() . '</p>';
 
 		// button
 		$link_for_customer = $dc->build_synchronous_dashboard_apply_url( $service_provider_id, $service_provider_template );
