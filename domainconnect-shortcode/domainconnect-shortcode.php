@@ -21,9 +21,9 @@ function domainconnect_shortcodes_init() {
 	require_once plugin_dir_path( __FILE__ ) . 'src/domain_functions.php';
 	require_once plugin_dir_path( __FILE__ ) . 'src/provider_functions.php';
 
-	add_shortcode( 'domainconnect', 'WPE\Domainconnect\domainconnect_shortcode' );
+	add_shortcode( 'domainconnect', __NAMESPACE__.'\domainconnect_shortcode' );
 }
-add_action( 'init', 'WPE\Domainconnect\domainconnect_shortcodes_init' );
+add_action( 'init', __NAMESPACE__.'\domainconnect_shortcodes_init' );
 
 /**
  * Initialize
@@ -35,10 +35,10 @@ function domainconnect_shortcode( $atts = [], $content = null, $tag = '' ) {
 	// override default attributes with user attributes
 	$domainconnect_atts = shortcode_atts(
 		[
-			'button'      => 'Easy DNS',
-			'help'        => 'Click to setup DNS with your domain provider.',
-			'supported'   => 'This domain is at a DNS provider that supports Domain Connect',
+			'supported'   => 'Click to setup DNS with your domain provider.',
 			'unsupported' => 'See our instructions to manually setup DNS for your domain',
+			'dest'        => '127.0.0.1', # ip address or host to cname to
+			'domain'      => 'domain.example.com',
 		],
 		$atts,
 		$tag
@@ -53,7 +53,7 @@ function domainconnect_shortcode( $atts = [], $content = null, $tag = '' ) {
 
 	$is_supported = false;
 
-	$domain = get_domain_from_input();
+	$domain = get_domain_from_input($domainconnect_atts);
 	if ( $domain ) {
 		$dc = new DomainFunctions( $domain );
 		$dc->discover();
@@ -66,20 +66,11 @@ function domainconnect_shortcode( $atts = [], $content = null, $tag = '' ) {
 	// start box
 	$o .= '<div class="domainconnect-box">';
 
-	if ( $is_supported ) {
-		// TODO: what to do with this supported message?
-		// How would it be possible to display the detected provider name
-		//$o .= '<p>' . esc_html__( $domainconnect_atts['supported'], 'domainconnect' ) . '</p>';
-		//$o .= "<p> $domain : " . $dc->provider_display_name() . '</p>';
-
-		// button
+	if ( $dc && $is_supported ) {
 		$link_for_customer = $dc->build_synchronous_dashboard_apply_url( $service_provider_id, $service_provider_template );
 		$o                .= '<a href="' . esc_url( $link_for_customer ) . '">' .
-			esc_html__( $domainconnect_atts['button'], 'domainconnect' ) .
+			esc_html__( $domainconnect_atts['supported'], 'domainconnect' ) .
 			'</a>';
-
-		// help text
-		$o .= '<p>' . esc_html__( $domainconnect_atts['help'], 'domainconnect' ) . '</p>';
 	} else {
 		$o .= '<p>' . esc_html__( $domainconnect_atts['unsupported'], 'domainconnect' ) . '</p>';
 	}
@@ -104,6 +95,6 @@ function domainconnect_shortcode( $atts = [], $content = null, $tag = '' ) {
  * Return the domain from input.  Assume it's the root/apex domain
  * Discovery must work on the root domain (zone) only.
  */
-function get_domain_from_input() {
-	return $_GET['domain'] ?: '';
+function get_domain_from_input($attrs) {
+	return $attrs['domain'] ?: '';
 }
