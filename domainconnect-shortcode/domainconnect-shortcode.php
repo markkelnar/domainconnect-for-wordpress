@@ -51,12 +51,11 @@ function domainconnect_shortcode( $atts = [], $content = null, $tag = '' ) {
 
 		if ( show_content( $atts, $is_supported ) ) {
 			$o .= '<div class="domainconnect-box">';
-			$o .= "SHOW [$is_supported]";
 			// default message if custom one is not specified
 			if ( empty( $content ) ) {
 				if ( $is_supported ) {
-					$default_content = sprintf( "[domainconnect_url domain=%s /]", $domain );
-					$o .= do_shortcode( $default_content );
+					$content = sprintf( "[domainconnect_url domain=%s /]", $domain );
+					$o .= do_shortcode( $content );
 				} else {
 					$o .= 'Follow manual steps to setup DNS';
 				}
