@@ -2,7 +2,7 @@
 
 namespace WPE\Domainconnect;
 
-const CACHE_24HR = 86400;
+const CACHE_24HR  = 86400;
 const CACHE_GROUP = 'domain-connect-dnsprovider';
 
 class ProviderFunctions {
@@ -13,7 +13,7 @@ class ProviderFunctions {
 	}
 
 	public function from_cache() {
-		$data                     = wp_cache_get( $this->cache_key, CACHE_GROUP );
+		$data = wp_cache_get( $this->cache_key, CACHE_GROUP );
 		if ( $data ) {
 			$this->template_supported = $data->provider_url;
 			$this->providers          = $data->service_providers;

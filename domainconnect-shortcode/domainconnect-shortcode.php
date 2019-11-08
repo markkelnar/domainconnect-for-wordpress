@@ -15,13 +15,14 @@
 namespace WPE\Domainconnect;
 
 /**
- * [domainconnect]
+ * [domainconnect] [domainconnect_url]
  */
 function domainconnect_shortcodes_init() {
 	require_once plugin_dir_path( __FILE__ ) . 'src/domain_functions.php';
 	require_once plugin_dir_path( __FILE__ ) . 'src/provider_functions.php';
 
 	add_shortcode( 'domainconnect', __NAMESPACE__.'\domainconnect_shortcode' );
+	add_shortcode( 'domainconnect_url', __NAMESPACE__.'\domainconnect_url_shortcode' );
 }
 add_action( 'init', __NAMESPACE__.'\domainconnect_shortcodes_init' );
 
@@ -29,20 +30,7 @@ add_action( 'init', __NAMESPACE__.'\domainconnect_shortcodes_init' );
  * Initialize
  */
 function domainconnect_shortcode( $atts = [], $content = null, $tag = '' ) {
-	// normalize attribute keys, lowercase
-	$atts = array_change_key_case( (array) $atts, CASE_LOWER );
-
-	// override default attributes with user attributes
-	$domainconnect_atts = shortcode_atts(
-		[
-			'supported'   => 'Click to setup DNS with your domain provider.',
-			'unsupported' => 'See our instructions to manually setup DNS for your domain',
-			'dest'        => '127.0.0.1', # ip address or host to cname to
-			'domain'      => 'domain.example.com',
-		],
-		$atts,
-		$tag
-	);
+	$atts = normalize_attributes( $atts, $tag );
 
 	// start output
 	$o = '';
@@ -50,10 +38,9 @@ function domainconnect_shortcode( $atts = [], $content = null, $tag = '' ) {
 	// configurable settings, should come from WP options or environment
 	$service_provider_id       = 'wpengine.com';
 	$service_provider_template = 'arecord';
+	$is_supported              = false;
 
-	$is_supported = false;
-
-	$domain = get_domain_from_input($domainconnect_atts);
+	$domain = get_domain_from_input( $atts );
 	if ( $domain ) {
 		$dc = new DomainFunctions( $domain );
 		$dc->discover();
@@ -61,40 +48,108 @@ function domainconnect_shortcode( $atts = [], $content = null, $tag = '' ) {
 			$provider     = new ProviderFunctions( $dc->get_provider_api() );
 			$is_supported = $provider->query_template_support( $service_provider_id, $service_provider_template );
 		}
+
+		if ( show_content( $atts, $is_supported ) ) {
+			$o .= '<div class="domainconnect-box">';
+			$o .= "SHOW [$is_supported]";
+			// default message if custom one is not specified
+			if ( empty( $content ) ) {
+				if ( $is_supported ) {
+					$default_content = sprintf( "[domainconnect_url domain=%s /]", $domain );
+					$o .= do_shortcode( $default_content );
+				} else {
+					$o .= 'Follow manual steps to setup DNS';
+				}
+			} else {
+				// secure output by executing the_content filter hook on $content
+				$content = apply_filters( 'the_content', $content );
+
+				// run shortcode parser recursively
+				$o .= do_shortcode( $content );
+			}
+			$o .= '</div>';
+		}
 	}
 
-	// start box
-	$o .= '<div class="domainconnect-box">';
-
-	if ( $dc && $is_supported ) {
-		$link_for_customer = $dc->build_synchronous_dashboard_apply_url( $service_provider_id, $service_provider_template );
-		$o                .= '<a href="' . esc_url( $link_for_customer ) . '">' .
-			esc_html__( $domainconnect_atts['supported'], 'domainconnect' ) .
-			'</a>';
-	} else {
-		$o .= '<p>' . esc_html__( $domainconnect_atts['unsupported'], 'domainconnect' ) . '</p>';
-	}
-
-	// enclosing tags
-	if ( ! is_null( $content ) ) {
-		// secure output by executing the_content filter hook on $content
-		$o .= apply_filters( 'the_content', $content );
-
-		// run shortcode parser recursively
-		$o .= do_shortcode( $content );
-	}
-
-	// end box
-	$o .= '</div>';
-
-	// return output
 	return $o;
+}
+
+/**
+ * Initialize
+ */
+function domainconnect_url_shortcode( $atts = [], $content = null, $tag = '' ) {
+	$atts = normalize_attributes( $atts, $tag );
+
+	// start output
+	$o = '';
+
+	// configurable settings, should come from WP options or environment
+	$service_provider_id       = 'wpengine.com';
+	$service_provider_template = 'arecord';
+	$is_supported              = false;
+
+	$domain = get_domain_from_input( $atts );
+	if ( $domain ) {
+		$dc = new DomainFunctions( $domain );
+		$dc->discover();
+		if ( $dc->provider_supports_synchronous() ) {
+			$provider     = new ProviderFunctions( $dc->get_provider_api() );
+			$is_supported = $provider->query_template_support( $service_provider_id, $service_provider_template );
+		}
+
+		if ( $is_supported ) {
+			$link_for_customer = $dc->build_synchronous_dashboard_apply_url( $service_provider_id, $service_provider_template );
+
+			// default message if custom one is not specified
+			if ( empty( $content ) ) {
+				$content = $dc->provider_display_name();
+			}
+			$o .= '<a href="' . esc_url( $link_for_customer ) . '">';
+			$o .= esc_html__( $content, 'domainconnect' );
+			$o .= '</a>';
+		}
+	}
+
+	return $o;
+}
+
+/**
+ * Override default attributes with user attributes
+ * dest is the ip address or host to cname to
+ */
+function normalize_attributes( $atts, $tag ) {
+	// normalize attribute keys, lowercase
+	$atts = array_change_key_case( (array) $atts, CASE_LOWER );
+
+	// override default attributes with user attributes
+	// dest is the ip address or host to cname to
+	$atts = shortcode_atts(
+		[
+			'domain' => '',
+			'when'   => 'supported',
+			'dest'   => '127.0.0.1',
+		],
+		$atts,
+		$tag
+	);
+	return $atts;
+}
+
+/**
+ * Look at attribute of when to show the content message
+ */
+function show_content( $atts, $supports_domainconnect ) {
+	if ( $supports_domainconnect && 'supported' == $atts['when'] ) {
+		return true;
+	} else if ( ! $supports_domainconect && 'unsupported' == $atts['when'] ) {
+		return true;
+	}
 }
 
 /**
  * Return the domain from input.  Assume it's the root/apex domain
  * Discovery must work on the root domain (zone) only.
  */
-function get_domain_from_input($attrs) {
-	return $attrs['domain'] ?: '';
+function get_domain_from_input( $atts ) {
+	return $atts['domain'] ?: '';
 }
