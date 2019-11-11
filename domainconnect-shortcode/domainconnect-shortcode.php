@@ -108,7 +108,7 @@ function domainconnect_url_shortcode( $atts = [], $content = null, $tag = '' ) {
 			if ( empty( $content ) ) {
 				$content = $dc->provider_display_name();
 			}
-			$o .= '<a href="' . esc_url( $link_for_customer ) . '">';
+			$o .= '<a href="' . esc_url( $link_for_customer ) . '" target="_new">';
 			$o .= esc_html__( $content, 'domainconnect' );
 			$o .= '</a>';
 		}
