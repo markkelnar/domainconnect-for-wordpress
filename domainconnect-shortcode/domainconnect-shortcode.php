@@ -18,13 +18,14 @@ namespace WPE\Domainconnect;
  * [domainconnect] [domainconnect_url]
  */
 function domainconnect_shortcodes_init() {
-	require_once plugin_dir_path( __FILE__ ) . 'src/domain_functions.php';
-	require_once plugin_dir_path( __FILE__ ) . 'src/provider_functions.php';
+	require_once plugin_dir_path( __FILE__ ) . 'src/domain_discovery.php';
+	require_once plugin_dir_path( __FILE__ ) . 'src/syncflow_dns_provider.php';
+	require_once plugin_dir_path( __FILE__ ) . 'src/template_exampleservice_domainconnect_org.php';
 
-	add_shortcode( 'domainconnect', __NAMESPACE__.'\domainconnect_shortcode' );
-	add_shortcode( 'domainconnect_url', __NAMESPACE__.'\domainconnect_url_shortcode' );
+	add_shortcode( 'domainconnect', __NAMESPACE__ . '\domainconnect_shortcode' );
+	add_shortcode( 'domainconnect_url', __NAMESPACE__ . '\domainconnect_url_shortcode' );
 }
-add_action( 'init', __NAMESPACE__.'\domainconnect_shortcodes_init' );
+add_action( 'init', __NAMESPACE__ . '\domainconnect_shortcodes_init' );
 
 /**
  * Initialize
@@ -42,10 +43,10 @@ function domainconnect_shortcode( $atts = [], $content = null, $tag = '' ) {
 
 	$domain = get_domain_from_input( $atts );
 	if ( $domain ) {
-		$dc = new DomainFunctions( $domain );
+		$dc = new DomainDiscovery( $domain );
 		$dc->discover();
 		if ( $dc->provider_supports_synchronous() ) {
-			$provider     = new ProviderFunctions( $dc->get_provider_api() );
+			$provider     = new SyncflowDnsProvider( $dc->get_provider_api() );
 			$is_supported = $provider->query_template_support( $service_provider_id, $service_provider_template );
 		}
 
@@ -54,7 +55,7 @@ function domainconnect_shortcode( $atts = [], $content = null, $tag = '' ) {
 			// default message if custom one is not specified
 			if ( empty( $content ) ) {
 				if ( $is_supported ) {
-					$content = sprintf( "[domainconnect_url domain=%s /]", $domain );
+					$content = sprintf( '[domainconnect_url domain=%s /]', $domain );
 					$o .= do_shortcode( $content );
 				} else {
 					$o .= 'Follow manual steps to setup DNS';
@@ -89,15 +90,19 @@ function domainconnect_url_shortcode( $atts = [], $content = null, $tag = '' ) {
 
 	$domain = get_domain_from_input( $atts );
 	if ( $domain ) {
-		$dc = new DomainFunctions( $domain );
+		$dc = new DomainDiscovery( $domain );
 		$dc->discover();
 		if ( $dc->provider_supports_synchronous() ) {
-			$provider     = new ProviderFunctions( $dc->get_provider_api() );
+			$provider     = new SyncflowDnsProvider( $dc->get_provider_api() );
 			$is_supported = $provider->query_template_support( $service_provider_id, $service_provider_template );
 		}
 
 		if ( $is_supported ) {
-			$link_for_customer = $dc->build_synchronous_dashboard_apply_url( $service_provider_id, $service_provider_template );
+			$ip = '1.2.3.4';
+			$randomtext = 'hello';
+			$synchronous_template = new TemplateExampleServiceDomainConnectOrg( $domain, $ip, $randomtext );
+
+			$link_for_customer = $synchronous_template->synchronous_dashboard_apply_url( $dc->get_provider_dashboard_url() );
 
 			// default message if custom one is not specified
 			if ( empty( $content ) ) {

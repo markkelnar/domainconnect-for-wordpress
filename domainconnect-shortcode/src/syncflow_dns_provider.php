@@ -3,9 +3,9 @@
 namespace WPE\Domainconnect;
 
 const CACHE_24HR  = 86400;
-const CACHE_GROUP = 'domain-connect-dnsprovider';
+const CACHE_GROUP = 'domain-connect-syncflow-provider';
 
-class ProviderFunctions {
+class SyncflowDnsProvider {
 
 	public function __construct( $provider_api_url ) {
 		$this->api_url   = $provider_api_url;

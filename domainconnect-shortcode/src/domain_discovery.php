@@ -3,12 +3,12 @@
 namespace WPE\Domainconnect;
 
 const CACHE_24HR = 86400;
-const CACHE_GROUP = 'domain-connect-domain';
+const CACHE_GROUP = 'domain-connect-domain-discovery';
 
 /**
  * [domainconnect]
  */
-class DomainFunctions {
+class DomainDiscovery {
 
 	public function __construct( $domain ) {
 		$this->domain            = $domain;
@@ -97,18 +97,6 @@ class DomainFunctions {
 
 	public function get_provider_api() {
 		return $this->provider_settings['urlAPI'] ?: false;
-	}
-
-	public function build_synchronous_dashboard_apply_url( $service_provider_id, $service_provider_template ) {
-		// {urlSyncUX}/v2/domainTemplates/providers/{providerId}/services/{serviceId}/apply?[properties]
-		$url = sprintf(
-			'%s/v2/domainTemplates/providers/%s/services/%s/apply?',
-			$this->get_provider_dashboard_url(),
-			$service_provider_id,
-			$service_provider_template
-		);
-		// TODO add parameters
-		return $url;
 	}
 
 	function example_domain_discovery() {
