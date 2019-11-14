@@ -78,4 +78,7 @@ class SynchronousApiWpengine {
         return false;
     }
 
+    public function provider_display_name() {
+        return $response['sync']['registrar'];
+    }
 }

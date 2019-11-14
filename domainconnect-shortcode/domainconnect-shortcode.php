@@ -19,7 +19,7 @@ namespace WPE\Domainconnect;
  */
 function domainconnect_shortcodes_init() {
 	require_once plugin_dir_path( __FILE__ ) . 'src/discover/domain_discovery.php';
-	require_once plugin_dir_path( __FILE__ ) . 'src/discover/synchronous_dns_provider.php';
+	require_once plugin_dir_path( __FILE__ ) . 'src/discover/synchronous_provider.php';
 	require_once plugin_dir_path( __FILE__ ) . 'src/discover/template_exampleservice_domainconnect_org.php';
 
 	add_shortcode( 'domainconnect', __NAMESPACE__ . '\domainconnect_shortcode' );
@@ -36,26 +36,20 @@ function domainconnect_shortcode( $atts = [], $content = null, $tag = '' ) {
 	// start output
 	$o = '';
 
-	// Decide to use local discovery or an api service provider
-	if ( defined('AUTH_API_WPENGINE_USERNAME') ) {
-		$link_for_customer = getUrlWPengineApi( $domain );
-	} else {
-		$link_for_customer = getUrlExampleTemplate( $domain, $dc->get_provider_dashboard_url() );
-	}
-
 	$domain = get_domain_from_input( $atts );
-
 	if ( $domain ) {
-		// configurable settings, should come from WP options or environment
-		$service_provider_id       = 'wpengine.com';
-		$service_provider_template = 'arecord';
-		$is_supported              = false;
+		$is_supported = false;
 
-		$dc = new DomainDiscovery( $domain );
-		$dc->discover();
-		if ( $dc->provider_supports_synchronous() ) {
-			$provider     = new SynchronousProvider( $dc->get_provider_api() );
-			$is_supported = $provider->query_template_support( $service_provider_id, $service_provider_template );
+		// Decide to use local discovery or an api service provider
+		if ( defined('AUTH_API_WPENGINE_USERNAME') ) {
+			$is_supported = checkSupportedWpengine();
+		} else {
+			$dc = new DomainDiscovery( $domain );
+			$dc->discover();
+			$is_supported = (
+				$dc->provider_supports_synchronous() &&
+				checkSupportedExampleTemplate( $dc->get_provider_api() )
+			);
 		}
 
 		if ( show_content( $atts, $is_supported ) ) {
@@ -91,26 +85,34 @@ function domainconnect_url_shortcode( $atts = [], $content = null, $tag = '' ) {
 	// start output
 	$o = '';
 
-	// configurable settings, should come from WP options or environment
-	$service_provider_id       = 'wpengine.com';
-	$service_provider_template = 'arecord';
-	$is_supported              = false;
-
 	$domain = get_domain_from_input( $atts );
 	if ( $domain ) {
-		$dc = new DomainDiscovery( $domain );
-		$dc->discover();
-		if ( $dc->provider_supports_synchronous() ) {
-			$provider     = new SynchronousProvider( $dc->get_provider_api() );
-			$is_supported = $provider->query_template_support( $service_provider_id, $service_provider_template );
+		$is_supported = false;
+
+		// Decide to use local discovery or an api service provider
+		if ( defined('AUTH_API_WPENGINE_USERNAME') ) {
+			$is_supported = checkSupportedWpengine();
+			if ( $is_supported ) {
+				$link_for_customer = getUrlWPengineApi( $domain );
+				$synchronous_api = new SynchronousApiWpengine();
+				$display_name = $synchronous_api->provider_display_name();
+			}
+		} else {
+			$dc = new DomainDiscovery( $domain );
+			$dc->discover();
+			if ( $dc->provider_supports_synchronous() ) {
+				$is_supported = checkSupportedExampleTemplate( $dc->get_provider_api() );
+				if ( $is_supported ) {
+					$link_for_customer = getUrlExampleTemplate( $domain, $dc->get_provider_dashboard_url() );
+					$display_name = $dc->provider_display_name();
+				}
+			}
 		}
 
 		if ( $is_supported ) {
-			$link_for_customer = getUrlExampleTemplate( $domain, $dc->get_provider_dashboard_url() );
-
 			// default message if custom one is not specified
 			if ( empty( $content ) ) {
-				$content = $dc->provider_display_name();
+				$content = $display_name;
 			}
 			$o .= '<a href="' . esc_url( $link_for_customer ) . '" target="_new">';
 			$o .= esc_html__( $content, 'domainconnect' );
@@ -121,6 +123,13 @@ function domainconnect_url_shortcode( $atts = [], $content = null, $tag = '' ) {
 	return $o;
 }
 
+function checkSupportedExampleTemplate ( $url ) {
+	$service_provider_id       = TemplateExampleServiceDomainConnectOrg::PROVIDER_ID;
+	$service_provider_template = TemplateExampleServiceDomainConnectOrg::TEMPLATE_SERVICE_ID;
+	$provider                  = new SynchronousProvider( $url );
+	return $provider->query_template_support( $service_provider_id, $service_provider_template );
+}
+
 function getUrlExampleTemplate( $domain, $service_provider_dashboard_url ) {
 	$ip = '1.2.3.4';
 	$randomtext = 'hello';
@@ -129,12 +138,16 @@ function getUrlExampleTemplate( $domain, $service_provider_dashboard_url ) {
 	return $synchronous_template->synchronous_dashboard_apply_url( $service_provider_dashboard_url );
 }
 
+function checkSupportedWpengine ( ) {
+	return getUrlWPengineApi( $domain );
+}
+
 function getUrlWPengineApi( $domain ) {
 	$ip = '1.2.3.4';
 	$site = 'mark';
 	$service_provider = new SynchronousApiWpengine();
 	$service_provider->login();
-	$service_provider->discovery( $domain, $ip, $site )
+	return $service_provider->discovery( $domain, $ip, $site );
 }
 
 /**
