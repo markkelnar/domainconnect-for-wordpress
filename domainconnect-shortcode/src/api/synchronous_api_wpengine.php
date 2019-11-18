@@ -26,13 +26,15 @@ namespace WPE\Domainconnect;
  */
 class SynchronousApiWpengine {
 
-    public function __construct() ) {
+    public function __construct() {
         $this->auth_username = AUTH_API_WPENGINE_USERNAME;
         $this->auth_password = AUTH_API_WPENGINE_PASSWORD;
         $this->auth_token_api = 'https://auth.wpengine.io/v1/tokens';
         $this->api_token = '';
         $this->service_url = 'https://landmark.wpesvc.net/v1/domains';
         $this->redirect_uri = 'https://my.wpengine.com/installs/%s/domains';
+
+        $this->response = array();
 	}
 
     public function login() {
@@ -70,15 +72,18 @@ class SynchronousApiWpengine {
         );
 
         $response = wp_remote_post( $url, $args );
-        $response = json_decode( wp_remote_retrieve_body( $response ), true );
+        $this->response = json_decode( wp_remote_retrieve_body( $response ), true );
 
-        if ( isset($response['sync']) ) {
-            return $response['sync']['template_url'];
+        if ( isset($this->response['sync']) ) {
+            return $this->response['sync']['template_url'];
         }
         return false;
     }
 
     public function provider_display_name() {
-        return $response['sync']['registrar'];
+        if ( isset( $response['sync']['registrar'] ) ) {
+            return $response['sync']['registrar'];
+        }
+        return false;
     }
 }
