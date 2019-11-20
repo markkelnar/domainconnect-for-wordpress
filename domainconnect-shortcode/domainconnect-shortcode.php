@@ -21,6 +21,7 @@ function domainconnect_shortcodes_init() {
 	require_once plugin_dir_path( __FILE__ ) . 'src/discover/domain_discovery.php';
 	require_once plugin_dir_path( __FILE__ ) . 'src/discover/synchronous_provider.php';
 	require_once plugin_dir_path( __FILE__ ) . 'src/discover/template_exampleservice_domainconnect_org.php';
+	require_once plugin_dir_path( __FILE__ ) . 'src/wpengine/api/sycnhronous.php';
 
 	add_shortcode( 'domainconnect', __NAMESPACE__ . '\domainconnect_shortcode' );
 	add_shortcode( 'domainconnect_url', __NAMESPACE__ . '\domainconnect_url_shortcode' );
@@ -94,7 +95,7 @@ function domainconnect_url_shortcode( $atts = [], $content = null, $tag = '' ) {
 			$is_supported = checkSupportedWpengine();
 			if ( $is_supported ) {
 				$link_for_customer = getUrlWPengineApi( $domain );
-				$synchronous_api = new SynchronousApiWpengine();
+				$synchronous_api = new WpengineApiSynchronous();
 				$display_name = $synchronous_api->provider_display_name();
 			}
 		} else {
@@ -145,7 +146,7 @@ function checkSupportedWpengine ( ) {
 function getUrlWPengineApi( $domain ) {
 	$ip = '1.2.3.4';
 	$site = 'mark';
-	$service_provider = new SynchronousApiWpengine();
+	$service_provider = new WpengineApiSynchronous();
 	$service_provider->login();
 	return $service_provider->discovery( $domain, $ip, $site );
 }
@@ -189,4 +190,17 @@ function show_content( $atts, $supports_domainconnect ) {
  */
 function get_domain_from_input( $atts ) {
 	return $atts['domain'] ?: '';
+}
+
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
+	require_once plugin_dir_path( __FILE__ ) . 'src/wpengine/api/sycnhronous.php';
+
+    function login( $args, $assoc_args ) {
+		$service_provider = new WpengineApiSynchronous();
+		if ( ! $service_provider->login() ) {
+			\WP_CLI::error( "Didn't login ");
+		}
+		\WP_CLI::success( sprintf('Parsed %d bytes of data', strlen($data)) );
+	}
+	\WP_CLI::add_command( 'login', __NAMESPACE__ . '\login' );
 }

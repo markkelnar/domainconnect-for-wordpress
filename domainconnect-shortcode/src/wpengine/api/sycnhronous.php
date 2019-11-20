@@ -24,30 +24,39 @@ namespace WPE\Domainconnect;
 /**
  *
  */
-class SynchronousApiWpengine {
+class WpengineApiSynchronous {
 
     public function __construct() {
         $this->auth_username = AUTH_API_WPENGINE_USERNAME;
         $this->auth_password = AUTH_API_WPENGINE_PASSWORD;
-        $this->auth_token_api = 'https://auth.wpengine.io/v1/tokens';
+        $this->auth_token_url = defined('AUTH_API_WPENGINE_URL') ?
+            AUTH_API_WPENGINE_URL : 'https://auth.wpengine.io/v1/tokens';
         $this->api_token = '';
-        $this->service_url = 'https://landmark.wpesvc.net/v1/domains';
-        $this->redirect_uri = 'https://my.wpengine.com/installs/%s/domains';
+        $this->service_url = defined('WPENGINE_DOMAINCONNECT_SERVICE_URL') ?
+            WPENGINE_DOMAINCONNECT_SERVICE_URL : 'https://www.wpengineapi.com/v1/domainconnectdomains';
+        $this->redirect_uri = define('WPENGINE_DOMAINCONNECT_REDIRECT_URL') ?
+            WPENGINE_DOMAINCONNECT_REDIRECT_URL : 'https://my.wpengine.com/installs/%s/domains';
 
         $this->response = array();
 	}
 
     public function login() {
-        $url = $this->auth_token_api;
+        $url = $this->auth_token_url;
+        $headers = array (
+            'Authorization' => 'Basic ' . base64_encode( $this->auth_username . ':' . $this->auth_password )
+        );
         $args = array(
-            'headers' => array(
-                'Authorization' => 'Basic ' . base64_encode( $this->auth_username . ':' . $this->auth_password ),
-        )
+            'headers' => $headers,
+        );
 
-        $response = wp_remote_post( $url, $args );
-        $response = json_decode( wp_remote_retrieve_body( $response ), true );
-        if ( isset($response['token']) ) {
-            $this->api_token = $response['token'];
+        $response = wp_remote_post( $this->auth_token_url, $args );
+        if ( is_wp_error($response) ) {
+            return false;
+        }
+
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+        if ( isset($body['token']) ) {
+            $this->api_token = $body['token'];
             return true;
         }
         return false;
@@ -81,8 +90,8 @@ class SynchronousApiWpengine {
     }
 
     public function provider_display_name() {
-        if ( isset( $response['sync']['registrar'] ) ) {
-            return $response['sync']['registrar'];
+        if ( isset( $this->response['sync']['registrar'] ) ) {
+            return $this->response['sync']['registrar'];
         }
         return false;
     }
