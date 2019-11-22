@@ -103,8 +103,8 @@ class WpengineApiSynchronous {
     }
 
     public function provider_display_name() {
-        if ( isset( $this->response['sync']['registrar'] ) ) {
-            return $this->response['sync']['registrar'];
+        if ( isset( $this->response['registrar'] ) ) {
+            return $this->response['registrar'];
         }
         return false;
     }

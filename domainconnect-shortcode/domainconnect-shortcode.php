@@ -47,7 +47,7 @@ function domainconnect_shortcode( $atts = [], $content = null, $tag = '' ) {
 
 		// Decide to use local discovery or an api service provider
 		if ( defined('AUTH_API_WPENGINE_USERNAME') ) {
-			$is_supported = checkSupportedWpengine();
+			$is_supported = checkSupportedWpengine( $domain );
 		} else {
 			$dc = new DomainDiscovery( $domain );
 			$dc->discover();
@@ -96,11 +96,10 @@ function domainconnect_url_shortcode( $atts = [], $content = null, $tag = '' ) {
 
 		// Decide to use local discovery or an api service provider
 		if ( defined('AUTH_API_WPENGINE_USERNAME') ) {
-			$is_supported = checkSupportedWpengine();
+			$is_supported = checkSupportedWpengine( $domain );
 			if ( $is_supported ) {
 				$link_for_customer = getUrlWPengineApi( $domain );
-				$synchronous_api = new WpengineApiSynchronous();
-				$display_name = $synchronous_api->provider_display_name();
+				$display_name = getDnsDisplayNameWpengine( $domain );
 			}
 		} else {
 			$dc = new DomainDiscovery( $domain );
@@ -143,8 +142,17 @@ function getUrlExampleTemplate( $domain, $service_provider_dashboard_url ) {
 	return $synchronous_template->synchronous_dashboard_apply_url( $service_provider_dashboard_url );
 }
 
-function checkSupportedWpengine ( ) {
+function checkSupportedWpengine ( $domain ) {
 	return !! getUrlWPengineApi( $domain );
+}
+
+function getDnsDisplayNameWpengine( $domain ) {
+	$ip = '1.2.3.4';
+	$site = 'mark';
+	$service_provider = new WpengineApiSynchronous();
+	$login = $service_provider->login();
+	$service_provider->discovery( $domain, $ip, $site );
+	return $service_provider->provider_display_name();
 }
 
 function getUrlWPengineApi( $domain ) {
