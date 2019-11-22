@@ -17,16 +17,20 @@ namespace WPE\Domainconnect;
 /**
  * [domainconnect] [domainconnect_url]
  */
-function domainconnect_shortcodes_init() {
+function domainconnect_init() {
 	require_once plugin_dir_path( __FILE__ ) . 'src/discover/domain_discovery.php';
 	require_once plugin_dir_path( __FILE__ ) . 'src/discover/synchronous_provider.php';
 	require_once plugin_dir_path( __FILE__ ) . 'src/discover/template_exampleservice_domainconnect_org.php';
 	require_once plugin_dir_path( __FILE__ ) . 'src/wpengine/api/sycnhronous.php';
 
+	if ( defined( 'WP_CLI' ) && WP_CLI ) {
+		require_once plugin_dir_path( __FILE__ ) . 'domainconnect-cli.php';
+	}
+
 	add_shortcode( 'domainconnect', __NAMESPACE__ . '\domainconnect_shortcode' );
 	add_shortcode( 'domainconnect_url', __NAMESPACE__ . '\domainconnect_url_shortcode' );
 }
-add_action( 'init', __NAMESPACE__ . '\domainconnect_shortcodes_init' );
+add_action( 'init', __NAMESPACE__ . '\domainconnect_init' );
 
 /**
  * Initialize
@@ -140,7 +144,7 @@ function getUrlExampleTemplate( $domain, $service_provider_dashboard_url ) {
 }
 
 function checkSupportedWpengine ( ) {
-	return getUrlWPengineApi( $domain );
+	return !! getUrlWPengineApi( $domain );
 }
 
 function getUrlWPengineApi( $domain ) {
@@ -192,15 +196,3 @@ function get_domain_from_input( $atts ) {
 	return $atts['domain'] ?: '';
 }
 
-if ( defined( 'WP_CLI' ) && WP_CLI ) {
-	require_once plugin_dir_path( __FILE__ ) . 'src/wpengine/api/sycnhronous.php';
-
-    function login( $args, $assoc_args ) {
-		$service_provider = new WpengineApiSynchronous();
-		if ( ! $service_provider->login() ) {
-			\WP_CLI::error( "Didn't login ");
-		}
-		\WP_CLI::success( sprintf('Parsed %d bytes of data', strlen($data)) );
-	}
-	\WP_CLI::add_command( 'login', __NAMESPACE__ . '\login' );
-}
