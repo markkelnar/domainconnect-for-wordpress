@@ -1,6 +1,6 @@
 <?php
 
-namespace WPE\Domainconnect;
+namespace DomainconnectWP;
 
 const CACHE_24HR  = 86400;
 const CACHE_GROUP = 'domain-connect-synchronous-provider';

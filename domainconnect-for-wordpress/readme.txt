@@ -1,7 +1,7 @@
-=== Domain Connect Shortcode ===
-Contributors: (this should be a list of wordpress.org userid's)
+=== Domain Connect For WordPress ===
+Contributors: markkelnar
 Donate link: https://example.com/
-Tags: comments, spam
+Tags: dns
 Requires at least: 4.5
 Tested up to: 5.0.3
 Stable tag: 0.1.0

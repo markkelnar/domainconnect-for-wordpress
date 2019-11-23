@@ -1,36 +1,12 @@
 <?php
-/**
- * Plugin Name:     Domain Connect Shortcode
- * Plugin URI:      PLUGIN SITE HERE
- * Description:     A way to expose easy domain setup links for domains that support domain connect
- * Author:          Mark Kelnar
- * Author URI:      YOUR SITE HERE
- * Text Domain:     domainconnect-shortcode
- * Domain Path:     /languages
- * Version:         0.1.0
- *
- * @package         Domainconnect_Shortcode
- */
 
-namespace WPE\Domainconnect;
+namespace DomainconnectWP;
 
-/**
- * [domainconnect] [domainconnect_url]
- */
-function domainconnect_init() {
-	require_once plugin_dir_path( __FILE__ ) . 'src/discover/domain_discovery.php';
-	require_once plugin_dir_path( __FILE__ ) . 'src/discover/synchronous_provider.php';
-	require_once plugin_dir_path( __FILE__ ) . 'src/discover/template_exampleservice_domainconnect_org.php';
-	require_once plugin_dir_path( __FILE__ ) . 'src/wpengine/api/sycnhronous.php';
-
-	if ( defined( 'WP_CLI' ) && WP_CLI ) {
-		require_once plugin_dir_path( __FILE__ ) . 'domainconnect-cli.php';
-	}
-
-	add_shortcode( 'domainconnect', __NAMESPACE__ . '\domainconnect_shortcode' );
-	add_shortcode( 'domainconnect_url', __NAMESPACE__ . '\domainconnect_url_shortcode' );
-}
-add_action( 'init', __NAMESPACE__ . '\domainconnect_init' );
+require_once plugin_dir_path( __FILE__ ) . 'src/discover/domain_discovery.php';
+require_once plugin_dir_path( __FILE__ ) . 'src/discover/synchronous_provider.php';
+require_once plugin_dir_path( __FILE__ ) . 'src/discover/template_exampleservice_domainconnect_org.php';
+require_once plugin_dir_path( __FILE__ ) . 'src/wpengine/api/sycnhronous.php';
+require_once plugin_dir_path( __FILE__ ) . 'src/wpengine/api/sycnhronous.php';
 
 /**
  * Initialize

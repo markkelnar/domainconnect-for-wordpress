@@ -19,7 +19,7 @@
  * }
  */
 
-namespace WPE\Domainconnect;
+namespace DomainconnectWP;
 
 /**
  *

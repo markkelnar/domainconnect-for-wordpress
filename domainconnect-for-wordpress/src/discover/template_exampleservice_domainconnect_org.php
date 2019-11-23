@@ -1,6 +1,6 @@
 <?php
 
-namespace WPE\Domainconnect;
+namespace DomainconnectWP;
 
 /**
  * To apply example template

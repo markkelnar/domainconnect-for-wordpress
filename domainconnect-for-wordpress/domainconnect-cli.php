@@ -1,6 +1,6 @@
 <?php
 
-namespace WPE\Domainconnect;
+namespace DomainconnectWP;
 
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	require_once plugin_dir_path( __FILE__ ) . 'src/wpengine/api/sycnhronous.php';
